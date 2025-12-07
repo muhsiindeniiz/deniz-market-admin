@@ -35,7 +35,7 @@ const settingGroups: SettingGroup[] = [
   {
     title: 'Ödeme Ayarları',
     icon: DollarSign,
-    keys: ['FREE_DELIVERY_THRESHOLD', 'DELIVERY_FEE', 'MIN_ORDER_AMOUNT', 'CURRENCY_SYMBOL', 'CURRENCY_CODE'],
+    keys: ['FREE_DELIVERY_THRESHOLD', 'DELIVERY_FEE', 'MIN_ORDER_AMOUNT', 'FIRST_ORDER_DISCOUNT', 'CURRENCY_SYMBOL', 'CURRENCY_CODE'],
   },
   {
     title: 'Sipariş Ayarları',
@@ -173,6 +173,7 @@ export default function AppSettingsPage() {
       FREE_DELIVERY_THRESHOLD: 'Ücretsiz Kargo Limiti (₺)',
       DELIVERY_FEE: 'Standart Kargo Ücreti (₺)',
       MIN_ORDER_AMOUNT: 'Minimum Sipariş Tutarı (₺)',
+      FIRST_ORDER_DISCOUNT: 'İlk Sipariş İndirimi (%)',
       MAX_ITEMS_PER_ORDER: 'Sipariş Başına Maks. Ürün',
       ORDER_PREPARATION_TIME: 'Hazırlık Süresi (dk)',
       DELIVERY_TIME: 'Teslimat Süresi (dk)',
