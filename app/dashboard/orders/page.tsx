@@ -27,8 +27,8 @@ import {
 const statusOptions = [
   { value: '', label: 'Tüm Durumlar' },
   { value: 'pending', label: 'Sipariş Alındı' },
-  { value: 'processing', label: 'İşleniyor' },
-  { value: 'preparing', label: 'Hazırlanıyor' },
+  { value: 'processing', label: 'Hazırlanıyor' },
+  { value: 'preparing', label: 'Paketleniyor' },
   { value: 'on_delivery', label: 'Yolda' },
   { value: 'delivered', label: 'Teslim Edildi' },
   { value: 'cancelled', label: 'İptal Edildi' },
@@ -36,8 +36,8 @@ const statusOptions = [
 
 const bulkStatusOptions: { value: OrderStatus; label: string; icon: React.ElementType; color: string }[] = [
   { value: 'pending', label: 'Sipariş Alındı', icon: Clock, color: 'text-yellow-600' },
-  { value: 'processing', label: 'İşleniyor', icon: Loader2, color: 'text-blue-600' },
-  { value: 'preparing', label: 'Hazırlanıyor', icon: Package, color: 'text-purple-600' },
+  { value: 'processing', label: 'Hazırlanıyor', icon: Loader2, color: 'text-blue-600' },
+  { value: 'preparing', label: 'Paketleniyor', icon: Package, color: 'text-purple-600' },
   { value: 'on_delivery', label: 'Yolda', icon: Truck, color: 'text-orange-600' },
   { value: 'delivered', label: 'Teslim Edildi', icon: CheckCircle, color: 'text-green-600' },
   { value: 'cancelled', label: 'İptal Edildi', icon: XCircle, color: 'text-red-600' },

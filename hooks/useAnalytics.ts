@@ -320,12 +320,12 @@ export function useAnalytics(dateRange: 'week' | 'month' | 'year' = 'month') {
       });
 
       const statusLabels: Record<string, string> = {
-        pending: 'Beklemede',
-        processing: 'İşleniyor',
-        preparing: 'Hazırlanıyor',
+        pending: 'Sipariş Alındı',
+        processing: 'Hazırlanıyor',
+        preparing: 'Paketleniyor',
         on_delivery: 'Yolda',
         delivered: 'Teslim Edildi',
-        cancelled: 'İptal',
+        cancelled: 'İptal Edildi',
       };
 
       setOrderStatusData(

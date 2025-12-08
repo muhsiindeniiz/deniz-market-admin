@@ -16,8 +16,8 @@ export const COLORS = {
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: 'Sipariş Alındı',
-  processing: 'İşleniyor',
-  preparing: 'Hazırlanıyor',
+  processing: 'Hazırlanıyor',
+  preparing: 'Paketleniyor',
   on_delivery: 'Yolda',
   delivered: 'Teslim Edildi',
   cancelled: 'İptal Edildi',

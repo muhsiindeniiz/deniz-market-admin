@@ -14,8 +14,8 @@ import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
 import { ArrowLeft, MapPin, Phone, User, Package } from 'lucide-react';
 const statusOptions = [
   { value: 'pending', label: 'Sipariş Alındı' },
-  { value: 'processing', label: 'İşleniyor' },
-  { value: 'preparing', label: 'Hazırlanıyor' },
+  { value: 'processing', label: 'Hazırlanıyor' },
+  { value: 'preparing', label: 'Paketleniyor' },
   { value: 'on_delivery', label: 'Yolda' },
   { value: 'delivered', label: 'Teslim Edildi' },
   { value: 'cancelled', label: 'İptal Edildi' },

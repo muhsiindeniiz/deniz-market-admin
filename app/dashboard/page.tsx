@@ -420,12 +420,12 @@ export default function DashboardPage() {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Sipariş Durumu Özeti</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
-            { status: 'pending', label: 'Beklemede', icon: Clock, color: 'yellow' },
-            { status: 'processing', label: 'İşleniyor', icon: Loader2, color: 'blue' },
-            { status: 'preparing', label: 'Hazırlanıyor', icon: Package, color: 'purple' },
+            { status: 'pending', label: 'Sipariş Alındı', icon: Clock, color: 'yellow' },
+            { status: 'processing', label: 'Hazırlanıyor', icon: Loader2, color: 'blue' },
+            { status: 'preparing', label: 'Paketleniyor', icon: Package, color: 'purple' },
             { status: 'on_delivery', label: 'Yolda', icon: Truck, color: 'orange' },
             { status: 'delivered', label: 'Teslim Edildi', icon: CheckCircle, color: 'green' },
-            { status: 'cancelled', label: 'İptal', icon: XCircle, color: 'red' },
+            { status: 'cancelled', label: 'İptal Edildi', icon: XCircle, color: 'red' },
           ].map((item) => {
             const count = orders.filter((o) => o.status === item.status).length;
             const Icon = item.icon;
