@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { Notification } from '@/lib/types';
+import { sendPushNotification, cancelPushNotification } from '@/lib/onesignal';
 import toast from 'react-hot-toast';
 
 interface UseNotificationsOptions {
@@ -75,7 +76,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
       setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      toast.error('Bildirimler yüklenirken hata oluştu');
+      toast.error('Bildirimler yuklenirken hata olustu');
     } finally {
       setLoading(false);
     }
@@ -123,9 +124,10 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
     type: 'order' | 'promotion' | 'general';
     user_ids?: string[];
     send_to_all?: boolean;
+    push_options?: Record<string, unknown>;
   }) => {
     try {
-      const { title, message, type: notificationType, user_ids, send_to_all } = data;
+      const { title, message, type: notificationType, user_ids, send_to_all, push_options } = data;
 
       let targetUserIds: string[] = [];
 
@@ -136,47 +138,94 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
       } else if (user_ids && user_ids.length > 0) {
         targetUserIds = user_ids;
       } else {
-        throw new Error('Lütfen en az bir kullanıcı seçin veya tümüne gönder seçeneğini işaretleyin');
+        throw new Error('Lutfen en az bir kullanici secin veya tumune gonder secenegini isaretleyin');
       }
 
-      const notifications = targetUserIds.map((userId) => ({
-        user_id: userId,
+      // 1. Send push notification via OneSignal first to get the notification ID
+      let onesignalId: string | null = null;
+      let pushWarning: string | null = null;
+      try {
+        const pushPayload = {
+          title,
+          message,
+          data: { type: notificationType },
+          ...(send_to_all
+            ? { included_segments: ['Subscribed Users'] }
+            : { include_external_user_ids: targetUserIds }),
+          // Merge additional push options (icon, color, priority, scheduling, etc.)
+          ...push_options,
+        };
+
+        const pushResult = await sendPushNotification(pushPayload) as { id?: string; warning?: string; recipients?: number };
+        onesignalId = pushResult.id || null;
+
+        // Check for warning (e.g., no subscribers)
+        if (pushResult.warning) {
+          pushWarning = pushResult.warning;
+        }
+      } catch (pushError) {
+        console.error('Push notification failed:', pushError);
+        toast.error('Push bildirim gonderilemedi (OneSignal hatasi)');
+      }
+
+      // 2. Save notifications to Supabase with OneSignal ID
+      const notificationRecords = targetUserIds.map((uId) => ({
+        user_id: uId,
         title,
         message,
         type: notificationType,
         is_read: false,
         data: null,
+        onesignal_id: onesignalId,
       }));
 
-      const { error } = await supabase.from('notifications').insert(notifications);
+      const { error } = await supabase.from('notifications').insert(notificationRecords);
 
       if (error) throw error;
 
-      toast.success(`${targetUserIds.length} kullanıcıya bildirim gönderildi`);
+      if (pushWarning) {
+        toast.success(`${targetUserIds.length} kullaniciya uygulama ici bildirim gonderildi`);
+        toast(pushWarning, { icon: '⚠️', duration: 5000 });
+      } else if (onesignalId) {
+        toast.success(`${targetUserIds.length} kullaniciya bildirim gonderildi (Push + In-App)`);
+      } else {
+        toast.success(`${targetUserIds.length} kullaniciya uygulama ici bildirim gonderildi`);
+      }
+
       fetchNotifications();
       fetchStats();
       return true;
     } catch (error: any) {
       console.error('Error creating notification:', error);
-      toast.error(error.message || 'Bildirim oluşturulurken hata oluştu');
+      toast.error(error.message || 'Bildirim olusturulurken hata olustu');
       return false;
     }
   };
 
   const deleteNotification = async (id: string) => {
     try {
-      // Silinecek bildirimin bilgilerini al (stats güncellemesi için)
+      // Get notification info before deleting (for stats update and OneSignal cancellation)
       const notificationToDelete = notifications.find((n) => n.id === id);
+
+      // Cancel from OneSignal if it has an onesignal_id
+      if (notificationToDelete?.onesignal_id) {
+        try {
+          await cancelPushNotification(notificationToDelete.onesignal_id);
+        } catch (cancelError) {
+          console.error('Failed to cancel OneSignal notification:', cancelError);
+          // Continue with deletion even if OneSignal cancel fails
+        }
+      }
 
       const { error } = await supabase.from('notifications').delete().eq('id', id);
 
       if (error) throw error;
 
-      // State'i hemen güncelle
+      // Update state immediately
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       setTotalCount((prev) => prev - 1);
 
-      // Stats'ı güncelle
+      // Update stats
       if (notificationToDelete) {
         setStats((prev) => ({
           ...prev,
@@ -189,24 +238,41 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
       toast.success('Bildirim silindi');
     } catch (error) {
       console.error('Error deleting notification:', error);
-      toast.error('Bildirim silinirken hata oluştu');
+      toast.error('Bildirim silinirken hata olustu');
     }
   };
 
   const deleteMultipleNotifications = async (ids: string[]) => {
     try {
-      // Silinecek bildirimlerin bilgilerini al
+      // Get notifications to delete
       const notificationsToDelete = notifications.filter((n) => ids.includes(n.id));
+
+      // Collect unique OneSignal IDs to cancel
+      const onesignalIds = [...new Set(
+        notificationsToDelete
+          .map((n) => n.onesignal_id)
+          .filter((id): id is string => id !== null)
+      )];
+
+      // Cancel from OneSignal
+      for (const onesignalId of onesignalIds) {
+        try {
+          await cancelPushNotification(onesignalId);
+        } catch (cancelError) {
+          console.error('Failed to cancel OneSignal notification:', onesignalId, cancelError);
+          // Continue with other cancellations
+        }
+      }
 
       const { error } = await supabase.from('notifications').delete().in('id', ids);
 
       if (error) throw error;
 
-      // State'i hemen güncelle
+      // Update state immediately
       setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
       setTotalCount((prev) => prev - ids.length);
 
-      // Stats'ı güncelle
+      // Update stats
       if (notificationsToDelete.length > 0) {
         const unreadCount = notificationsToDelete.filter((n) => !n.is_read).length;
         const orderCount = notificationsToDelete.filter((n) => n.type === 'order').length;
@@ -225,7 +291,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
       toast.success(`${ids.length} bildirim silindi`);
     } catch (error) {
       console.error('Error deleting notifications:', error);
-      toast.error('Bildirimler silinirken hata oluştu');
+      toast.error('Bildirimler silinirken hata olustu');
     }
   };
 
@@ -238,7 +304,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
 
       if (error) throw error;
 
-      // State'i hemen güncelle
+      // Update state immediately
       const unreadCount = notifications.filter((n) => ids.includes(n.id) && !n.is_read).length;
 
       setNotifications((prev) =>
@@ -250,10 +316,10 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         unread: prev.unread - unreadCount,
       }));
 
-      toast.success('Bildirimler okundu olarak işaretlendi');
+      toast.success('Bildirimler okundu olarak isaretlendi');
     } catch (error) {
       console.error('Error marking notifications as read:', error);
-      toast.error('İşlem sırasında hata oluştu');
+      toast.error('Islem sirasinda hata olustu');
     }
   };
 
