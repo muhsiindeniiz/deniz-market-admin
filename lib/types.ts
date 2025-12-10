@@ -152,7 +152,6 @@ export interface Notification {
   type: 'order' | 'promotion' | 'general';
   is_read: boolean;
   data: Record<string, unknown> | null;
-  onesignal_id: string | null;
   created_at: string;
 }
 

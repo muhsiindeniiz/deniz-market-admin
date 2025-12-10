@@ -10,13 +10,6 @@ import { Input } from '@/components/ui/Input';
 import { Pagination } from '@/components/ui/Pagination';
 import { formatDate } from '@/lib/utils';
 import {
-  NOTIFICATION_COLORS,
-  PRIORITY_LEVELS,
-  IOS_INTERRUPTION_LEVELS,
-  NotificationIcon,
-  IOSInterruptionLevel,
-} from '@/lib/onesignal';
-import {
   Bell,
   Send,
   Trash2,
@@ -30,42 +23,7 @@ import {
   Mail,
   CheckCircle,
   Eye,
-  Settings,
-  ChevronDown,
-  ChevronUp,
-  Image,
-  Volume2,
-  Link,
-  Clock,
-  Palette,
-  Smartphone,
 } from 'lucide-react';
-
-interface PushSettings {
-  // Appearance
-  iconType: NotificationIcon;
-  accentColor: string;
-  bigPictureUrl: string;
-  // Sound & Priority
-  priority: number;
-  iosInterruptionLevel: IOSInterruptionLevel;
-  // Actions
-  actionUrl: string;
-  // Scheduling
-  scheduleEnabled: boolean;
-  scheduledTime: string;
-}
-
-const defaultPushSettings: PushSettings = {
-  iconType: 'default',
-  accentColor: 'green',
-  bigPictureUrl: '',
-  priority: 10,
-  iosInterruptionLevel: 'active',
-  actionUrl: '',
-  scheduleEnabled: false,
-  scheduledTime: '',
-};
 
 export default function NotificationsPage() {
   const [page, setPage] = useState(1);
@@ -75,7 +33,6 @@ export default function NotificationsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [notificationToDelete, setNotificationToDelete] = useState<string | null>(null);
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -85,9 +42,6 @@ export default function NotificationsPage() {
     selectedUsers: [] as string[],
     sendToAll: false,
   });
-
-  // Push notification settings
-  const [pushSettings, setPushSettings] = useState<PushSettings>(defaultPushSettings);
 
   const {
     notifications,
@@ -147,34 +101,12 @@ export default function NotificationsPage() {
       return;
     }
 
-    // Build push settings for the notification
-    const pushOptions: Record<string, unknown> = {
-      android_accent_color: NOTIFICATION_COLORS[pushSettings.accentColor]?.hex,
-      priority: pushSettings.priority,
-      ios_interruption_level: pushSettings.iosInterruptionLevel,
-    };
-
-    if (pushSettings.bigPictureUrl) {
-      pushOptions.big_picture = pushSettings.bigPictureUrl;
-      pushOptions.ios_attachments = { image: pushSettings.bigPictureUrl };
-    }
-
-    if (pushSettings.actionUrl) {
-      pushOptions.url = pushSettings.actionUrl;
-      pushOptions.app_url = pushSettings.actionUrl;
-    }
-
-    if (pushSettings.scheduleEnabled && pushSettings.scheduledTime) {
-      pushOptions.send_after = new Date(pushSettings.scheduledTime).toISOString();
-    }
-
     const success = await createNotification({
       title: formData.title,
       message: formData.message,
       type: formData.type,
       user_ids: formData.sendToAll ? undefined : formData.selectedUsers,
       send_to_all: formData.sendToAll,
-      push_options: pushOptions,
     });
 
     if (success) {
@@ -186,8 +118,6 @@ export default function NotificationsPage() {
         selectedUsers: [],
         sendToAll: false,
       });
-      setPushSettings(defaultPushSettings);
-      setShowAdvancedSettings(false);
     }
   };
 
@@ -240,8 +170,6 @@ export default function NotificationsPage() {
       selectedUsers: [],
       sendToAll: false,
     });
-    setPushSettings(defaultPushSettings);
-    setShowAdvancedSettings(false);
   };
 
   if (loading && notifications.length === 0) {
@@ -651,200 +579,6 @@ export default function NotificationsPage() {
                     {formData.selectedUsers.length} kullanici secildi
                   </p>
                 )}
-              </div>
-            )}
-          </div>
-
-          {/* Advanced Push Settings Toggle */}
-          <div className="border-t border-gray-200 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
-              className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-            >
-              <Settings className="w-4 h-4" />
-              Push Bildirim Ayarlari
-              {showAdvancedSettings ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
-
-            {showAdvancedSettings && (
-              <div className="mt-4 space-y-4 bg-gray-50 p-4 rounded-lg">
-                {/* Appearance Section */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                    <Palette className="w-4 h-4" />
-                    Gorunum
-                  </h4>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Vurgu Rengi (Android)
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(NOTIFICATION_COLORS).map(([key, { hex, name }]) => (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setPushSettings({ ...pushSettings, accentColor: key })}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs ${
-                            pushSettings.accentColor === key
-                              ? 'border-green-500 bg-green-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <span
-                            className="w-4 h-4 rounded-full"
-                            style={{ backgroundColor: `#${hex.slice(2)}` }}
-                          />
-                          {name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      <Image className="w-3 h-3 inline mr-1" />
-                      Buyuk Gorsel URL (Opsiyonel)
-                    </label>
-                    <input
-                      type="url"
-                      value={pushSettings.bigPictureUrl}
-                      onChange={(e) =>
-                        setPushSettings({ ...pushSettings, bigPictureUrl: e.target.value })
-                      }
-                      placeholder="https://example.com/image.jpg"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Bildirimde gosterilecek buyuk gorsel (1200x600 px onerilen)
-                    </p>
-                  </div>
-                </div>
-
-                {/* Priority Section */}
-                <div className="space-y-3 border-t border-gray-200 pt-3">
-                  <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                    <Volume2 className="w-4 h-4" />
-                    Oncelik & Ses
-                  </h4>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Android Onceligi
-                    </label>
-                    <select
-                      value={pushSettings.priority}
-                      onChange={(e) =>
-                        setPushSettings({ ...pushSettings, priority: Number(e.target.value) })
-                      }
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    >
-                      {PRIORITY_LEVELS.map((level) => (
-                        <option key={level.value} value={level.value}>
-                          {level.label} - {level.description}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      <Smartphone className="w-3 h-3 inline mr-1" />
-                      iOS Kesinti Seviyesi
-                    </label>
-                    <select
-                      value={pushSettings.iosInterruptionLevel}
-                      onChange={(e) =>
-                        setPushSettings({
-                          ...pushSettings,
-                          iosInterruptionLevel: e.target.value as IOSInterruptionLevel,
-                        })
-                      }
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    >
-                      {IOS_INTERRUPTION_LEVELS.map((level) => (
-                        <option key={level.value} value={level.value}>
-                          {level.label} - {level.description}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Action URL Section */}
-                <div className="space-y-3 border-t border-gray-200 pt-3">
-                  <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                    <Link className="w-4 h-4" />
-                    Aksiyon
-                  </h4>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Tiklaninca Acilacak URL (Opsiyonel)
-                    </label>
-                    <input
-                      type="text"
-                      value={pushSettings.actionUrl}
-                      onChange={(e) =>
-                        setPushSettings({ ...pushSettings, actionUrl: e.target.value })
-                      }
-                      placeholder="denizmarket://orders/123 veya https://example.com"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Deep link veya web URL girebilirsiniz
-                    </p>
-                  </div>
-                </div>
-
-                {/* Scheduling Section */}
-                <div className="space-y-3 border-t border-gray-200 pt-3">
-                  <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Zamanlama
-                  </h4>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="scheduleEnabled"
-                      checked={pushSettings.scheduleEnabled}
-                      onChange={(e) =>
-                        setPushSettings({
-                          ...pushSettings,
-                          scheduleEnabled: e.target.checked,
-                          scheduledTime: e.target.checked ? pushSettings.scheduledTime : '',
-                        })
-                      }
-                      className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-                    />
-                    <label htmlFor="scheduleEnabled" className="text-sm text-gray-700">
-                      Ileri tarihte gonder
-                    </label>
-                  </div>
-
-                  {pushSettings.scheduleEnabled && (
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Gonderim Zamani
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={pushSettings.scheduledTime}
-                        onChange={(e) =>
-                          setPushSettings({ ...pushSettings, scheduledTime: e.target.value })
-                        }
-                        min={new Date().toISOString().slice(0, 16)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                      />
-                    </div>
-                  )}
-                </div>
               </div>
             )}
           </div>

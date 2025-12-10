@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { Notification } from '@/lib/types';
-import { sendPushNotification, cancelPushNotification } from '@/lib/onesignal';
 import toast from 'react-hot-toast';
 
 interface UseNotificationsOptions {
@@ -124,10 +123,9 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
     type: 'order' | 'promotion' | 'general';
     user_ids?: string[];
     send_to_all?: boolean;
-    push_options?: Record<string, unknown>;
   }) => {
     try {
-      const { title, message, type: notificationType, user_ids, send_to_all, push_options } = data;
+      const { title, message, type: notificationType, user_ids, send_to_all } = data;
 
       let targetUserIds: string[] = [];
 
@@ -141,34 +139,6 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         throw new Error('Lutfen en az bir kullanici secin veya tumune gonder secenegini isaretleyin');
       }
 
-      // 1. Send push notification via OneSignal first to get the notification ID
-      let onesignalId: string | null = null;
-      let pushWarning: string | null = null;
-      try {
-        const pushPayload = {
-          title,
-          message,
-          data: { type: notificationType },
-          ...(send_to_all
-            ? { included_segments: ['Subscribed Users'] }
-            : { include_external_user_ids: targetUserIds }),
-          // Merge additional push options (icon, color, priority, scheduling, etc.)
-          ...push_options,
-        };
-
-        const pushResult = await sendPushNotification(pushPayload) as { id?: string; warning?: string; recipients?: number };
-        onesignalId = pushResult.id || null;
-
-        // Check for warning (e.g., no subscribers)
-        if (pushResult.warning) {
-          pushWarning = pushResult.warning;
-        }
-      } catch (pushError) {
-        console.error('Push notification failed:', pushError);
-        toast.error('Push bildirim gonderilemedi (OneSignal hatasi)');
-      }
-
-      // 2. Save notifications to Supabase with OneSignal ID
       const notificationRecords = targetUserIds.map((uId) => ({
         user_id: uId,
         title,
@@ -176,21 +146,13 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         type: notificationType,
         is_read: false,
         data: null,
-        onesignal_id: onesignalId,
       }));
 
       const { error } = await supabase.from('notifications').insert(notificationRecords);
 
       if (error) throw error;
 
-      if (pushWarning) {
-        toast.success(`${targetUserIds.length} kullaniciya uygulama ici bildirim gonderildi`);
-        toast(pushWarning, { icon: '⚠️', duration: 5000 });
-      } else if (onesignalId) {
-        toast.success(`${targetUserIds.length} kullaniciya bildirim gonderildi (Push + In-App)`);
-      } else {
-        toast.success(`${targetUserIds.length} kullaniciya uygulama ici bildirim gonderildi`);
-      }
+      toast.success(`${targetUserIds.length} kullaniciya bildirim gonderildi`);
 
       fetchNotifications();
       fetchStats();
@@ -204,18 +166,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
 
   const deleteNotification = async (id: string) => {
     try {
-      // Get notification info before deleting (for stats update and OneSignal cancellation)
       const notificationToDelete = notifications.find((n) => n.id === id);
-
-      // Cancel from OneSignal if it has an onesignal_id
-      if (notificationToDelete?.onesignal_id) {
-        try {
-          await cancelPushNotification(notificationToDelete.onesignal_id);
-        } catch (cancelError) {
-          console.error('Failed to cancel OneSignal notification:', cancelError);
-          // Continue with deletion even if OneSignal cancel fails
-        }
-      }
 
       const { error } = await supabase.from('notifications').delete().eq('id', id);
 
@@ -244,25 +195,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
 
   const deleteMultipleNotifications = async (ids: string[]) => {
     try {
-      // Get notifications to delete
       const notificationsToDelete = notifications.filter((n) => ids.includes(n.id));
-
-      // Collect unique OneSignal IDs to cancel
-      const onesignalIds = [...new Set(
-        notificationsToDelete
-          .map((n) => n.onesignal_id)
-          .filter((id): id is string => id !== null)
-      )];
-
-      // Cancel from OneSignal
-      for (const onesignalId of onesignalIds) {
-        try {
-          await cancelPushNotification(onesignalId);
-        } catch (cancelError) {
-          console.error('Failed to cancel OneSignal notification:', onesignalId, cancelError);
-          // Continue with other cancellations
-        }
-      }
 
       const { error } = await supabase.from('notifications').delete().in('id', ids);
 
