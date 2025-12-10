@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase } from '@/lib/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
+import { logger } from '@/lib/logger';
 
 interface OrderNotification {
   id: string;
@@ -51,7 +52,7 @@ export function OrderNotificationProvider({ children }: { children: React.ReactN
 
   // Play notification sound
   const playNotificationSound = useCallback(() => {
-    console.log('Attempting to play notification sound...');
+    logger.log('Attempting to play notification sound...');
 
     // Create a new audio instance each time to avoid issues
     const audio = new Audio(NOTIFICATION_SOUND_URL);
@@ -59,16 +60,16 @@ export function OrderNotificationProvider({ children }: { children: React.ReactN
 
     audio.play()
       .then(() => {
-        console.log('Notification sound played successfully');
+        logger.log('Notification sound played successfully');
       })
       .catch((error) => {
-        console.log('Audio playback failed:', error.message);
+        logger.log('Audio playback failed:', error.message);
       });
   }, []);
 
   // Setup realtime subscription
   useEffect(() => {
-    console.log('Setting up realtime subscription for orders...');
+    logger.log('Setting up realtime subscription for orders...');
 
     // Use a simpler channel setup
     const channel = supabase
@@ -86,7 +87,7 @@ export function OrderNotificationProvider({ children }: { children: React.ReactN
           table: 'orders',
         },
         (payload) => {
-          console.log('🔔 NEW ORDER RECEIVED:', payload);
+          logger.log('🔔 NEW ORDER RECEIVED:', payload);
 
           const newOrder = payload.new;
 
@@ -99,7 +100,7 @@ export function OrderNotificationProvider({ children }: { children: React.ReactN
             isRead: false,
           };
 
-          console.log('Adding notification:', notification);
+          logger.log('Adding notification:', notification);
           setNotifications((prev) => [notification, ...prev].slice(0, 50));
 
           // Show toast notification
@@ -114,19 +115,19 @@ export function OrderNotificationProvider({ children }: { children: React.ReactN
       );
 
     channel.subscribe((status, err) => {
-      console.log('Realtime subscription status:', status);
+      logger.log('Realtime subscription status:', status);
       if (err) {
-        console.error('Realtime subscription error:', err);
+        logger.error('Realtime subscription error:', err);
       }
       if (status === 'SUBSCRIBED') {
-        console.log('✅ Successfully subscribed to orders realtime!');
+        logger.log('✅ Successfully subscribed to orders realtime!');
       }
     });
 
     channelRef.current = channel;
 
     return () => {
-      console.log('Cleaning up realtime subscription');
+      logger.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [playNotificationSound]);

@@ -7,6 +7,7 @@ import { Order, OrderStatus } from '@/lib/types';
 import { ITEMS_PER_PAGE } from '@/lib/constants';
 import toast from 'react-hot-toast';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 interface UseOrdersOptions {
   status?: OrderStatus;
@@ -83,14 +84,14 @@ export function useOrders(options: UseOrdersOptions = {}) {
       const { data, error, count } = await query;
 
       if (error) {
-        console.error('Orders fetch error:', error);
+        logger.error('Orders fetch error:', error);
         throw error;
       }
 
       setOrders(data || []);
       setTotalCount(count || 0);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      logger.error('Error fetching orders:', error);
       toast.error('Siparişler yüklenirken hata oluştu');
     } finally {
       setLoading(false);
@@ -105,7 +106,7 @@ export function useOrders(options: UseOrdersOptions = {}) {
   useEffect(() => {
     if (!enableRealtime) return;
 
-    console.log('Setting up orders list realtime subscription...');
+    logger.log('Setting up orders list realtime subscription...');
 
     const channel = supabase.channel('orders-list-channel', {
       config: {
@@ -122,7 +123,7 @@ export function useOrders(options: UseOrdersOptions = {}) {
           table: 'orders',
         },
         async (payload) => {
-          console.log('Orders list change received:', payload);
+          logger.log('Orders list change received:', payload);
 
           if (payload.eventType === 'INSERT') {
             // Fetch the complete order with relations
@@ -158,12 +159,12 @@ export function useOrders(options: UseOrdersOptions = {}) {
               .single();
 
             if (error) {
-              console.error('Error fetching new order:', error);
+              logger.error('Error fetching new order:', error);
               return;
             }
 
             if (newOrder) {
-              console.log('Fetched new order with relations:', newOrder);
+              logger.log('Fetched new order with relations:', newOrder);
               // Only add to list if on first page and no filters
               if (page === 1 && !status && !search) {
                 setOrders((prev) => [newOrder, ...prev.slice(0, ITEMS_PER_PAGE - 1)]);
@@ -174,33 +175,33 @@ export function useOrders(options: UseOrdersOptions = {}) {
               }
             }
           } else if (payload.eventType === 'UPDATE') {
-            console.log('Order UPDATE received:', payload);
+            logger.log('Order UPDATE received:', payload);
             setOrders((prev) =>
               prev.map((order) =>
                 order.id === payload.new.id ? { ...order, ...payload.new } : order
               )
             );
           } else if (payload.eventType === 'DELETE') {
-            console.log('Order DELETE received:', payload);
+            logger.log('Order DELETE received:', payload);
             setOrders((prev) => prev.filter((order) => order.id !== payload.old.id));
             setTotalCount((prev) => Math.max(0, prev - 1));
           }
         }
       )
       .subscribe((status, err) => {
-        console.log('Orders list realtime subscription status:', status);
+        logger.log('Orders list realtime subscription status:', status);
         if (err) {
-          console.error('Orders list realtime subscription error:', err);
+          logger.error('Orders list realtime subscription error:', err);
         }
         if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to orders list realtime!');
+          logger.log('Successfully subscribed to orders list realtime!');
         }
       });
 
     channelRef.current = channel;
 
     return () => {
-      console.log('Cleaning up orders list realtime subscription');
+      logger.log('Cleaning up orders list realtime subscription');
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
@@ -246,7 +247,7 @@ export function useOrders(options: UseOrdersOptions = {}) {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error fetching order:', error);
+      logger.error('Error fetching order:', error);
       return null;
     }
   };
@@ -328,7 +329,7 @@ export function useOrders(options: UseOrdersOptions = {}) {
       toast.success('Sipariş durumu güncellendi');
       return true;
     } catch (error) {
-      console.error('Error updating order status:', error);
+      logger.error('Error updating order status:', error);
       toast.error('Sipariş durumu güncellenirken hata oluştu');
       return false;
     }
@@ -354,7 +355,7 @@ export function useOrders(options: UseOrdersOptions = {}) {
       toast.success(`${ids.length} siparişin durumu güncellendi`);
       return true;
     } catch (error) {
-      console.error('Error bulk updating order status:', error);
+      logger.error('Error bulk updating order status:', error);
       toast.error('Sipariş durumları güncellenirken hata oluştu');
       return false;
     }
@@ -382,7 +383,7 @@ export function useOrders(options: UseOrdersOptions = {}) {
       toast.success(`${ids.length} sipariş silindi`);
       return true;
     } catch (error) {
-      console.error('Error bulk deleting orders:', error);
+      logger.error('Error bulk deleting orders:', error);
       toast.error('Siparişler silinirken hata oluştu');
       return false;
     }
