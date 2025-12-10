@@ -18,6 +18,21 @@ interface UseOrdersOptions {
   enableRealtime?: boolean;
 }
 
+const playNotificationSound = () => {
+  try {
+    const audio = new Audio('/sounds/notification.mp3');
+    audio.volume = 1.0;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((error) => {
+        logger.error('Bildirim sesi çalınamadı:', error);
+      });
+    }
+  } catch (error) {
+    logger.error('Audio oluşturma hatası:', error);
+  }
+};
+
 export function useOrders(options: UseOrdersOptions = {}) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,6 +180,10 @@ export function useOrders(options: UseOrdersOptions = {}) {
 
             if (newOrder) {
               logger.log('Fetched new order with relations:', newOrder);
+
+              // Yeni sipariş geldiğinde bildirim sesi çal
+              playNotificationSound();
+
               // Only add to list if on first page and no filters
               if (page === 1 && !status && !search) {
                 setOrders((prev) => [newOrder, ...prev.slice(0, ITEMS_PER_PAGE - 1)]);
