@@ -12,6 +12,7 @@ interface UseProductsOptions {
   categoryId?: string;
   search?: string;
   page?: number;
+  skipInitialFetch?: boolean;
 }
 
 export function useProducts(options: UseProductsOptions = {}) {
@@ -20,7 +21,7 @@ export function useProducts(options: UseProductsOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
 
-  const { categoryId, search, page = 1 } = options;
+  const { categoryId, search, page = 1, skipInitialFetch = false } = options;
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -67,11 +68,13 @@ export function useProducts(options: UseProductsOptions = {}) {
   }, []);
 
   useEffect(() => {
-    fetchProducts();
+    if (!skipInitialFetch) {
+      fetchProducts();
+    }
     fetchCategories();
-  }, [fetchProducts, fetchCategories]);
+  }, [fetchProducts, fetchCategories, skipInitialFetch]);
 
-  const getProduct = async (id: string): Promise<Product | null> => {
+  const getProduct = useCallback(async (id: string): Promise<Product | null> => {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -85,7 +88,7 @@ export function useProducts(options: UseProductsOptions = {}) {
       console.error('Error fetching product:', error);
       return null;
     }
-  };
+  }, []);
 
   const createProduct = async (
     productData: Partial<Product>,

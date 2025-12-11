@@ -74,66 +74,85 @@ export function useReviews(options: UseReviewsOptions = {}) {
 
       if (error) throw error;
 
-      // Her review için kullanıcının o ürünü içeren siparişini bul
-      const reviewsWithOrders = await Promise.all(
-        (data || []).map(async (review) => {
-          // Kullanıcının bu ürünü içeren siparişlerini bul
-          const { data: orderItems } = await supabase
-            .from('order_items')
-            .select(
-              `
-              id,
-              product_id,
-              quantity,
-              order:orders!inner (
-                id,
-                order_number,
-                user_id
-              ),
-              product:products (
-                id,
-                name,
-                images
-              )
-            `
-            )
-            .eq('product_id', review.product_id)
-            .eq('orders.user_id', review.user_id)
-            .order('created_at', { ascending: false })
-            .limit(1);
+      if (!data || data.length === 0) {
+        setReviews([]);
+        setTotalCount(count || 0);
+        setLoading(false);
+        return;
+      }
 
-          if (orderItems && orderItems.length > 0) {
-            const orderRaw = orderItems[0].order as unknown as { id: string; order_number: string };
-            // Bu siparişin tüm ürünlerini al
-            const { data: allOrderItems } = await supabase
-              .from('order_items')
-              .select(
-                `
-                id,
-                product_id,
-                quantity,
-                product:products (
-                  id,
-                  name,
-                  images
-                )
-              `
-              )
-              .eq('order_id', orderRaw.id);
+      // Tüm review'ların user_id ve product_id'lerini topla
+      const userIds = [...new Set(data.map((r) => r.user_id))];
+      const productIds = [...new Set(data.map((r) => r.product_id))];
 
-            return {
-              ...review,
-              order: {
-                id: orderRaw.id,
-                order_number: orderRaw.order_number,
-                items: allOrderItems || [],
-              },
-            };
-          }
+      // Tek sorguda tüm ilgili siparişleri çek
+      const { data: allOrderItems } = await supabase
+        .from('order_items')
+        .select(
+          `
+          id,
+          product_id,
+          quantity,
+          order_id,
+          order:orders!inner (
+            id,
+            order_number,
+            user_id
+          ),
+          product:products (
+            id,
+            name,
+            images
+          )
+        `
+        )
+        .in('product_id', productIds)
+        .in('orders.user_id', userIds);
 
-          return review;
-        })
-      );
+      // User-Product bazlı sipariş map'i oluştur
+      const orderMap = new Map<string, { orderId: string; orderNumber: string; items: typeof allOrderItems }>();
+
+      (allOrderItems || []).forEach((item) => {
+        const orderRaw = item.order as unknown as { id: string; order_number: string; user_id: string };
+        const key = `${orderRaw.user_id}-${item.product_id}`;
+
+        if (!orderMap.has(key)) {
+          // Bu user-product için sipariş bilgisini kaydet
+          const orderItems = (allOrderItems || []).filter((oi) => {
+            const o = oi.order as unknown as { id: string };
+            return o.id === orderRaw.id;
+          });
+          orderMap.set(key, {
+            orderId: orderRaw.id,
+            orderNumber: orderRaw.order_number,
+            items: orderItems,
+          });
+        }
+      });
+
+      // Review'lara sipariş bilgilerini ekle
+      const reviewsWithOrders = data.map((review) => {
+        const key = `${review.user_id}-${review.product_id}`;
+        const orderInfo = orderMap.get(key);
+
+        if (orderInfo) {
+          return {
+            ...review,
+            order: {
+              id: orderInfo.orderId,
+              order_number: orderInfo.orderNumber,
+              items: orderInfo.items?.map((item) => ({
+                id: item.id,
+                product_id: item.product_id,
+                quantity: item.quantity,
+                product: item.product,
+              })) || [],
+            },
+          };
+        }
+
+        return review;
+      });
 
       setReviews(reviewsWithOrders);
       setTotalCount(count || 0);

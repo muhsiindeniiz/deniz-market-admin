@@ -9,9 +9,10 @@ import { Badge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Select';
 import { Loading } from '@/components/ui/Loading';
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, formatDeliveryTime } from '@/lib/utils';
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
-import { ArrowLeft, MapPin, Phone, User, Package } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, User, Package, Clock, Mail, CreditCard } from 'lucide-react';
+
 const statusOptions = [
   { value: 'pending', label: 'Sipariş Alındı' },
   { value: 'processing', label: 'Hazırlanıyor' },
@@ -20,13 +21,15 @@ const statusOptions = [
   { value: 'delivered', label: 'Teslim Edildi' },
   { value: 'cancelled', label: 'İptal Edildi' },
 ];
+
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { getOrder, updateOrderStatus } = useOrders();
+  const { getOrder, updateOrderStatus } = useOrders({ enableRealtime: false });
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+
   useEffect(() => {
     const fetchOrder = async () => {
       if (params.id) {
@@ -163,6 +166,10 @@ export default function OrderDetailPage() {
                 <span className="text-gray-900">{order.user?.full_name}</span>
               </div>
               <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-gray-400" />
+                <span className="text-gray-900">{order.user?.email || '-'}</span>
+              </div>
+              <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-gray-400" />
                 <span className="text-gray-900">{order.user?.phone || '-'}</span>
               </div>
@@ -182,10 +189,24 @@ export default function OrderDetailPage() {
               </div>
             </div>
           </Card>{' '}
+          {/* Teslimat Saati */}
+          {order.delivery_time && (
+            <Card>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Teslimat Saati</h3>
+              <div className="flex items-center gap-3">
+                <Clock className="w-5 h-5 text-gray-400" />
+                <span className="text-gray-900">{formatDeliveryTime(order.delivery_time)}</span>
+              </div>
+            </Card>
+          )}
+
           {/* Ödeme Bilgileri */}
           <Card>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Ödeme</h3>
-            <Badge>{PAYMENT_METHOD_LABELS[order.payment_method]}</Badge>
+            <div className="flex items-center gap-3">
+              <CreditCard className="w-5 h-5 text-gray-400" />
+              <Badge>{PAYMENT_METHOD_LABELS[order.payment_method]}</Badge>
+            </div>
           </Card>
         </div>
       </div>

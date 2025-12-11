@@ -14,21 +14,23 @@ export function formatCurrency(amount: number): string {
 }
 
 export function formatDate(date: string): string {
-  return new Intl.DateTimeFormat('tr-TR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(date));
+  // Intl yerine manuel format kullanarak hydration uyumsuzluğunu önle
+  const d = new Date(date);
+  const day = d.getDate().toString().padStart(2, '0');
+  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = d.getHours().toString().padStart(2, '0');
+  const minutes = d.getMinutes().toString().padStart(2, '0');
+  return `${day}.${month}.${year} ${hours}:${minutes}`;
 }
 
 export function formatDateShort(date: string): string {
-  return new Intl.DateTimeFormat('tr-TR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(date));
+  // Intl yerine manuel format kullanarak hydration uyumsuzluğunu önle
+  const d = new Date(date);
+  const day = d.getDate().toString().padStart(2, '0');
+  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
 }
 
 export function generateOrderNumber(): string {
@@ -49,6 +51,41 @@ export function getInitials(name: string): string {
 export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '...';
+}
+
+export function formatDeliveryTime(time: string): string {
+  // "14-16" veya "09:00 - 12:00" formatlarını destekle
+  const simpleMatch = time.match(/^(\d{1,2})-(\d{1,2})$/);
+  const detailedMatch = time.match(/(\d{1,2}):(\d{2})/);
+
+  let startHour: number;
+
+  if (simpleMatch) {
+    // "14-16" formatı
+    startHour = parseInt(simpleMatch[1], 10);
+    const endHour = parseInt(simpleMatch[2], 10);
+    const formattedTime = `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
+
+    if (startHour < 12) {
+      return `${formattedTime} (Sabah)`;
+    } else if (startHour < 18) {
+      return `${formattedTime} (Öğleden Sonra)`;
+    } else {
+      return `${formattedTime} (Akşam)`;
+    }
+  } else if (detailedMatch) {
+    // "09:00 - 12:00" formatı
+    startHour = parseInt(detailedMatch[1], 10);
+    if (startHour < 12) {
+      return `${time} (Sabah)`;
+    } else if (startHour < 18) {
+      return `${time} (Öğleden Sonra)`;
+    } else {
+      return `${time} (Akşam)`;
+    }
+  }
+
+  return time;
 }
 
 export function extractPathFromUrl(url: string): string | null {

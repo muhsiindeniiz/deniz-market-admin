@@ -114,8 +114,11 @@ export function useOrders(options: UseOrdersOptions = {}) {
   }, [status, search, page, dateFrom, dateTo]);
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    // enableRealtime: false ise sadece getOrder kullanılacak, liste çekilmeyecek
+    if (enableRealtime !== false) {
+      fetchOrders();
+    }
+  }, [fetchOrders, enableRealtime]);
 
   // Realtime subscription for orders
   useEffect(() => {
@@ -227,7 +230,7 @@ export function useOrders(options: UseOrdersOptions = {}) {
     };
   }, [enableRealtime, page, status, search]);
 
-  const getOrder = async (id: string): Promise<Order | null> => {
+  const getOrder = useCallback(async (id: string): Promise<Order | null> => {
     try {
       const { data, error } = await supabase
         .from('orders')
@@ -269,7 +272,7 @@ export function useOrders(options: UseOrdersOptions = {}) {
       logger.error('Error fetching order:', error);
       return null;
     }
-  };
+  }, []);
 
   const updateOrderStatus = async (id: string, newStatus: OrderStatus): Promise<boolean> => {
     try {

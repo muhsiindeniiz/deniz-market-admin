@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductForm } from '@/components/products/ProductForm';
@@ -9,22 +9,22 @@ import { Product } from '@/lib/types';
 
 export default function EditProductPage() {
   const params = useParams();
-  const { categories, getProduct, updateProduct, loading: categoriesLoading } = useProducts();
+  const { categories, getProduct, updateProduct, loading: categoriesLoading } = useProducts({
+    skipInitialFetch: true,
+  });
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const hasFetched = useRef(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
-      if (params.id && !hasFetched.current) {
-        hasFetched.current = true;
+      if (params.id) {
         const data = await getProduct(params.id as string);
         setProduct(data);
         setLoading(false);
       }
     };
     fetchProduct();
-  }, [params.id]);
+  }, [params.id, getProduct]);
 
   const handleSubmit = async (
     data: Partial<Product>,
