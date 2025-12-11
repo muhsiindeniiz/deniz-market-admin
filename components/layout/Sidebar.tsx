@@ -16,6 +16,8 @@ import {
     BarChart3,
     Download,
     X,
+    CircleDot,
+    History,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 const menuItems = [
@@ -27,6 +29,8 @@ const menuItems = [
     { href: '/dashboard/stores', label: 'Mağazalar', icon: Store },
     { href: '/dashboard/promos', label: 'Kampanyalar', icon: Megaphone },
     { href: '/dashboard/coupons', label: 'Kuponlar', icon: Ticket },
+    { href: '/dashboard/wheel-prizes', label: 'Çark Ödülleri', icon: CircleDot },
+    { href: '/dashboard/wheel-spins', label: 'Çark Geçmişi', icon: History },
     { href: '/dashboard/customers', label: 'Müşteriler', icon: Users },
     { href: '/dashboard/reviews', label: 'Değerlendirmeler', icon: Star },
     { href: '/dashboard/notifications', label: 'Bildirimler', icon: Bell },

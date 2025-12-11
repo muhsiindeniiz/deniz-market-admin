@@ -355,3 +355,38 @@ export interface AnalyticsData {
     }>;
   };
 }
+
+export type WheelPrizeType =
+  | 'discount_fixed'
+  | 'discount_percentage'
+  | 'free_delivery'
+  | 'bonus_spin'
+  | 'no_prize';
+
+export interface WheelPrize {
+  id: string;
+  label: string;
+  prize_type: WheelPrizeType;
+  prize_value: number;
+  min_order_amount: number;
+  probability: number;
+  color: string;
+  icon: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WheelSpin {
+  id: string;
+  user_id: string;
+  prize_id: string;
+  coupon_id: string | null;
+  spun_at: string;
+  week_number: number;
+  year: number;
+  user?: User;
+  prize?: WheelPrize;
+  coupon?: Coupon;
+}
