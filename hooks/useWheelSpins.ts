@@ -73,8 +73,9 @@ export function useWheelSpins() {
       // Prize type'a göre gruplama
       const spinsByPrizeType: Record<string, number> = {};
       allSpins?.forEach((spin) => {
-        const prizeType = (spin.prize as { prize_type: string })?.prize_type || 'unknown';
-        spinsByPrizeType[prizeType] = (spinsByPrizeType[prizeType] || 0) + 1;
+        const prize = spin.prize as { prize_type: string }[] | { prize_type: string } | null;
+        const prizeType = Array.isArray(prize) ? prize[0]?.prize_type : prize?.prize_type;
+        spinsByPrizeType[prizeType || 'unknown'] = (spinsByPrizeType[prizeType || 'unknown'] || 0) + 1;
       });
 
       setStats({
