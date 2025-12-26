@@ -12,6 +12,7 @@ import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge';
 import { formatCurrency, formatDate, formatDeliveryTime } from '@/lib/utils';
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
 import { ArrowLeft, MapPin, Phone, User, Package, Clock, Mail, CreditCard } from 'lucide-react';
+import { OrderChat } from '@/components/orders/OrderChat';
 
 const statusOptions = [
   { value: 'pending', label: 'Sipariş Alındı' },
@@ -145,6 +146,9 @@ export default function OrderDetailPage() {
               <p className="text-gray-600">{order.delivery_note}</p>
             </Card>
           )}
+
+          {/* Müşteri Mesajları */}
+          <OrderChat orderId={order.id} />
         </div>{' '}
         <div className="space-y-6">
           {/* Durum Güncelleme */}

@@ -390,3 +390,15 @@ export interface WheelSpin {
   prize?: WheelPrize;
   coupon?: Coupon;
 }
+
+export interface ChatMessage {
+  id: string;
+  order_id: string;
+  sender_type: 'user' | 'store';
+  sender_id: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+  order?: Order;
+  sender?: User;
+}

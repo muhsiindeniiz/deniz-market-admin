@@ -20,6 +20,7 @@ import {
     History,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useChatNotifications } from '@/contexts/ChatNotificationContext';
 const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/analytics', label: 'Analitik', icon: BarChart3 },
@@ -43,6 +44,7 @@ interface SidebarProps {
 }
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
+    const { totalUnreadMessages } = useChatNotifications();
     return (
         <>
             {/* Mobile Overlay */}
@@ -73,6 +75,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         const isActive =
                             pathname === item.href ||
                             (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                        const showBadge = item.href === '/dashboard/orders' && totalUnreadMessages > 0;
                         return (
                             <Link
                                 key={item.href}
@@ -87,6 +90,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                             >
                                 <Icon className="w-5 h-5" />
                                 {item.label}
+                                {showBadge && (
+                                    <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                        {totalUnreadMessages > 99 ? '99+' : totalUnreadMessages}
+                                    </span>
+                                )}
                             </Link>
                         );
                     })}

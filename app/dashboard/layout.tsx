@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Loading } from '@/components/ui/Loading';
 import { OrderNotificationProvider } from '@/contexts/OrderNotificationContext';
+import { ChatNotificationProvider } from '@/contexts/ChatNotificationContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -26,7 +27,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
   return (
     <OrderNotificationProvider>
-      <DashboardLayout>{children}</DashboardLayout>
+      <ChatNotificationProvider>
+        <DashboardLayout>{children}</DashboardLayout>
+      </ChatNotificationProvider>
     </OrderNotificationProvider>
   );
 }
