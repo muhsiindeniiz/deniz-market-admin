@@ -402,3 +402,83 @@ export interface ChatMessage {
   order?: Order;
   sender?: User;
 }
+
+export type CampaignType =
+  | 'flash_sale'
+  | 'weekend'
+  | 'min_cart'
+  | 'brand'
+  | 'birthday'
+  | 'category'
+  | 'product'
+  | 'first_order'
+  | 'free_delivery';
+
+export type DiscountType = 'percentage' | 'fixed' | 'free_delivery';
+
+export interface Campaign {
+  id: string;
+  name: string;
+  description: string | null;
+  campaign_type: CampaignType;
+  discount_type: DiscountType;
+  discount_value: number;
+  max_discount: number | null;
+  min_order_amount: number;
+  start_date: string;
+  end_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  valid_days: number[];
+  brand_name: string | null;
+  image_url: string | null;
+  badge_text: string | null;
+  badge_color: string;
+  background_color: string;
+  max_uses: number | null;
+  max_uses_per_user: number;
+  current_uses: number;
+  sort_order: number;
+  is_active: boolean;
+  is_featured: boolean;
+  created_at: string;
+  updated_at: string;
+  campaign_products?: CampaignProduct[];
+  campaign_categories?: CampaignCategory[];
+}
+
+export interface CampaignProduct {
+  id: string;
+  campaign_id: string;
+  product_id: string;
+  created_at: string;
+  product?: Product;
+}
+
+export interface CampaignCategory {
+  id: string;
+  campaign_id: string;
+  category_id: string;
+  created_at: string;
+  category?: Category;
+}
+
+export interface CampaignUsage {
+  id: string;
+  campaign_id: string;
+  user_id: string;
+  order_id: string | null;
+  discount_applied: number;
+  used_at: string;
+  user?: User;
+  campaign?: Campaign;
+}
+
+export interface BirthdayCampaignUsage {
+  id: string;
+  user_id: string;
+  campaign_id: string;
+  year: number;
+  coupon_id: string | null;
+  used_at: string;
+}

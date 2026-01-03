@@ -42,6 +42,47 @@ export const STORAGE_BUCKETS = {
   PRODUCTS: 'product-images',
   PROMOS: 'promos',
   STORES: 'stores',
+  CAMPAIGNS: 'campaigns',
 } as const;
 
 export const ITEMS_PER_PAGE = 10;
+
+export const CAMPAIGN_TYPE_LABELS: Record<string, string> = {
+  flash_sale: 'Anlık Fırsat',
+  weekend: 'Hafta Sonu',
+  min_cart: 'Minimum Sepet',
+  brand: 'Marka Kampanyası',
+  birthday: 'Doğum Günü',
+  category: 'Kategori İndirimi',
+  product: 'Ürün İndirimi',
+  first_order: 'İlk Sipariş',
+  free_delivery: 'Ücretsiz Kargo',
+};
+
+export const CAMPAIGN_TYPE_COLORS: Record<string, string> = {
+  flash_sale: 'bg-red-100 text-red-800',
+  weekend: 'bg-purple-100 text-purple-800',
+  min_cart: 'bg-green-100 text-green-800',
+  brand: 'bg-amber-100 text-amber-800',
+  birthday: 'bg-pink-100 text-pink-800',
+  category: 'bg-blue-100 text-blue-800',
+  product: 'bg-indigo-100 text-indigo-800',
+  first_order: 'bg-cyan-100 text-cyan-800',
+  free_delivery: 'bg-sky-100 text-sky-800',
+};
+
+export const DISCOUNT_TYPE_LABELS: Record<string, string> = {
+  percentage: 'Yüzde İndirim',
+  fixed: 'Sabit Tutar',
+  free_delivery: 'Ücretsiz Kargo',
+};
+
+export const DAY_LABELS: Record<number, string> = {
+  0: 'Pazar',
+  1: 'Pazartesi',
+  2: 'Salı',
+  3: 'Çarşamba',
+  4: 'Perşembe',
+  5: 'Cuma',
+  6: 'Cumartesi',
+};

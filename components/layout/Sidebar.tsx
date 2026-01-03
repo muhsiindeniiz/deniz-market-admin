@@ -18,6 +18,7 @@ import {
     X,
     CircleDot,
     History,
+    Percent,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChatNotifications } from '@/contexts/ChatNotificationContext';
@@ -28,7 +29,8 @@ const menuItems = [
     { href: '/dashboard/products', label: 'Ürünler', icon: Package },
     { href: '/dashboard/categories', label: 'Kategoriler', icon: FolderTree },
     { href: '/dashboard/stores', label: 'Mağazalar', icon: Store },
-    { href: '/dashboard/promos', label: 'Kampanyalar', icon: Megaphone },
+    { href: '/dashboard/campaigns', label: 'Kampanyalar', icon: Percent },
+    { href: '/dashboard/promos', label: 'Promosyonlar', icon: Megaphone },
     { href: '/dashboard/coupons', label: 'Kuponlar', icon: Ticket },
     { href: '/dashboard/wheel-prizes', label: 'Çark Ödülleri', icon: CircleDot },
     { href: '/dashboard/wheel-spins', label: 'Çark Geçmişi', icon: History },
