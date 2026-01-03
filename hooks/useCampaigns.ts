@@ -120,7 +120,15 @@ export function useCampaigns() {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error details:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint,
+                });
+                throw error;
+            }
 
             // Add product relations if campaign_type is 'product'
             if (newCampaign && selected_product_ids && selected_product_ids.length > 0) {
@@ -155,9 +163,18 @@ export function useCampaigns() {
 
             toast.success('Kampanya başarıyla oluşturuldu');
             return true;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error creating campaign:', error);
-            toast.error('Kampanya oluşturulurken hata oluştu');
+            // RLS policy hatası kontrolü
+            if (error?.code === '42501' || error?.message?.includes('policy')) {
+                toast.error('Yetki hatası: Kampanya oluşturma izniniz yok. Lütfen veritabanı politikalarını kontrol edin.');
+            } else if (error?.code === '23505') {
+                toast.error('Bu kampanya zaten mevcut.');
+            } else if (error?.message) {
+                toast.error(`Hata: ${error.message}`);
+            } else {
+                toast.error('Kampanya oluşturulurken hata oluştu');
+            }
             return false;
         }
     };
@@ -189,12 +206,21 @@ export function useCampaigns() {
                 })
                 .eq('id', id);
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error details:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint,
+                });
+                throw error;
+            }
 
             // Update product relations
             if (campaignData.campaign_type === 'product') {
                 // Delete existing relations
-                await supabase.from('campaign_products').delete().eq('campaign_id', id);
+                const { error: delError } = await supabase.from('campaign_products').delete().eq('campaign_id', id);
+                if (delError) console.error('Error deleting product relations:', delError);
 
                 // Add new relations
                 if (selected_product_ids && selected_product_ids.length > 0) {
@@ -203,14 +229,16 @@ export function useCampaigns() {
                         product_id: productId,
                     }));
 
-                    await supabase.from('campaign_products').insert(productRelations);
+                    const { error: insError } = await supabase.from('campaign_products').insert(productRelations);
+                    if (insError) console.error('Error inserting product relations:', insError);
                 }
             }
 
             // Update category relations
             if (campaignData.campaign_type === 'category') {
                 // Delete existing relations
-                await supabase.from('campaign_categories').delete().eq('campaign_id', id);
+                const { error: delError } = await supabase.from('campaign_categories').delete().eq('campaign_id', id);
+                if (delError) console.error('Error deleting category relations:', delError);
 
                 // Add new relations
                 if (selected_category_ids && selected_category_ids.length > 0) {
@@ -219,7 +247,8 @@ export function useCampaigns() {
                         category_id: categoryId,
                     }));
 
-                    await supabase.from('campaign_categories').insert(categoryRelations);
+                    const { error: insError } = await supabase.from('campaign_categories').insert(categoryRelations);
+                    if (insError) console.error('Error inserting category relations:', insError);
                 }
             }
 
@@ -234,9 +263,15 @@ export function useCampaigns() {
 
             toast.success('Kampanya başarıyla güncellendi');
             return true;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error updating campaign:', error);
-            toast.error('Kampanya güncellenirken hata oluştu');
+            if (error?.code === '42501' || error?.message?.includes('policy')) {
+                toast.error('Yetki hatası: Kampanya güncelleme izniniz yok.');
+            } else if (error?.message) {
+                toast.error(`Hata: ${error.message}`);
+            } else {
+                toast.error('Kampanya güncellenirken hata oluştu');
+            }
             return false;
         }
     };
@@ -247,7 +282,15 @@ export function useCampaigns() {
 
             const { error } = await supabase.from('campaigns').delete().eq('id', id);
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error details:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint,
+                });
+                throw error;
+            }
 
             // Update state
             setCampaigns((prev) => prev.filter((c) => c.id !== id));
@@ -260,9 +303,15 @@ export function useCampaigns() {
 
             toast.success('Kampanya başarıyla silindi');
             return true;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error deleting campaign:', error);
-            toast.error('Kampanya silinirken hata oluştu');
+            if (error?.code === '42501' || error?.message?.includes('policy')) {
+                toast.error('Yetki hatası: Kampanya silme izniniz yok.');
+            } else if (error?.message) {
+                toast.error(`Hata: ${error.message}`);
+            } else {
+                toast.error('Kampanya silinirken hata oluştu');
+            }
             return false;
         }
     };
@@ -274,7 +323,10 @@ export function useCampaigns() {
                 .update({ is_active: isActive, updated_at: new Date().toISOString() })
                 .eq('id', id);
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error details:', error);
+                throw error;
+            }
 
             // Update state
             setCampaigns((prev) =>
@@ -283,9 +335,13 @@ export function useCampaigns() {
 
             toast.success(isActive ? 'Kampanya aktifleştirildi' : 'Kampanya pasifleştirildi');
             return true;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error toggling campaign status:', error);
-            toast.error('İşlem sırasında hata oluştu');
+            if (error?.message) {
+                toast.error(`Hata: ${error.message}`);
+            } else {
+                toast.error('İşlem sırasında hata oluştu');
+            }
             return false;
         }
     };
@@ -297,7 +353,10 @@ export function useCampaigns() {
                 .update({ is_featured: isFeatured, updated_at: new Date().toISOString() })
                 .eq('id', id);
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error details:', error);
+                throw error;
+            }
 
             // Update state
             setCampaigns((prev) =>
@@ -306,9 +365,13 @@ export function useCampaigns() {
 
             toast.success(isFeatured ? 'Kampanya öne çıkarıldı' : 'Öne çıkarma kaldırıldı');
             return true;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error toggling featured status:', error);
-            toast.error('İşlem sırasında hata oluştu');
+            if (error?.message) {
+                toast.error(`Hata: ${error.message}`);
+            } else {
+                toast.error('İşlem sırasında hata oluştu');
+            }
             return false;
         }
     };
@@ -328,7 +391,7 @@ export function useCampaigns() {
             });
 
             // Batch update
-            await Promise.all(
+            const results = await Promise.all(
                 items.map((item) =>
                     supabase
                         .from('campaigns')
@@ -337,11 +400,22 @@ export function useCampaigns() {
                 )
             );
 
+            // Check for errors
+            const errors = results.filter((r) => r.error);
+            if (errors.length > 0) {
+                console.error('Sort order update errors:', errors);
+                throw new Error('Sıralama güncellenirken bazı hatalar oluştu');
+            }
+
             toast.success('Sıralama güncellendi');
             return true;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error updating sort order:', error);
-            toast.error('Sıralama güncellenirken hata oluştu');
+            if (error?.message) {
+                toast.error(`Hata: ${error.message}`);
+            } else {
+                toast.error('Sıralama güncellenirken hata oluştu');
+            }
             fetchCampaigns();
             return false;
         }
