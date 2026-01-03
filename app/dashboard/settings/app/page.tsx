@@ -23,6 +23,7 @@ import {
   ToggleLeft,
   ToggleRight,
   Info,
+  CircleDot,
 } from 'lucide-react';
 
 interface SettingGroup {
@@ -46,6 +47,11 @@ const settingGroups: SettingGroup[] = [
     title: 'Mağaza Ayarları',
     icon: Store,
     keys: ['STORE_OPEN_TIME', 'STORE_CLOSE_TIME', 'IS_STORE_OPEN'],
+  },
+  {
+    title: 'Çark Ayarları',
+    icon: CircleDot,
+    keys: ['WHEEL_ENABLED'],
   },
 ];
 
@@ -182,6 +188,7 @@ export default function AppSettingsPage() {
       IS_STORE_OPEN: 'Mağaza Açık',
       CURRENCY_SYMBOL: 'Para Birimi Sembolü',
       CURRENCY_CODE: 'Para Birimi Kodu',
+      WHEEL_ENABLED: 'Şans Çarkı Aktif',
     };
     return labels[key] || key;
   };
