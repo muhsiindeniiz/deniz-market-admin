@@ -31,6 +31,7 @@ export interface Product {
   description: string | null;
   price: number;
   discount_price: number | null;
+  vat_rate: number;
   category_id: string | null;
   images: string[];
   stock: number;

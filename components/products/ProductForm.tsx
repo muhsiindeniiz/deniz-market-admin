@@ -30,6 +30,7 @@ export function ProductForm({ product, categories, stores = [], onSubmit }: Prod
     description: '',
     price: '',
     discount_price: '',
+    vat_rate: '18',
     category_id: '',
     store_id: '',
     stock: '',
@@ -47,6 +48,7 @@ export function ProductForm({ product, categories, stores = [], onSubmit }: Prod
         description: product.description || '',
         price: product.price.toString(),
         discount_price: product.discount_price?.toString() || '',
+        vat_rate: product.vat_rate?.toString() || '18',
         category_id: product.category_id || '',
         store_id: product.store_id || '',
         stock: product.stock.toString(),
@@ -68,6 +70,7 @@ export function ProductForm({ product, categories, stores = [], onSubmit }: Prod
       description: formData.description || null,
       price: parseFloat(formData.price),
       discount_price: formData.discount_price ? parseFloat(formData.discount_price) : null,
+      vat_rate: parseFloat(formData.vat_rate) || 18,
       category_id: formData.category_id || null,
       store_id: formData.store_id || null,
       stock: parseInt(formData.stock) || 0,
@@ -110,6 +113,15 @@ export function ProductForm({ product, categories, stores = [], onSubmit }: Prod
     { value: 'paket', label: 'Paket' },
   ];
 
+  const vatRateOptions = [
+    { value: '0', label: '%0 (KDV\'siz)' },
+    { value: '1', label: '%1' },
+    { value: '8', label: '%8' },
+    { value: '10', label: '%10' },
+    { value: '18', label: '%18' },
+    { value: '20', label: '%20' },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
@@ -142,6 +154,12 @@ export function ProductForm({ product, categories, stores = [], onSubmit }: Prod
             step="0.01"
             value={formData.discount_price}
             onChange={(e) => setFormData({ ...formData, discount_price: e.target.value })}
+          />
+          <Select
+            label="KDV Oranı"
+            value={formData.vat_rate}
+            onChange={(e) => setFormData({ ...formData, vat_rate: e.target.value })}
+            options={vatRateOptions}
           />
           <Input
             label="Stok"
@@ -201,11 +219,12 @@ export function ProductForm({ product, categories, stores = [], onSubmit }: Prod
             <span className="text-sm text-gray-700">İndirimde</span>
           </label>
         </div>
-      </Card>{' '}
+      </Card>
+
       <Card>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Ürün Görselleri</h3>
         <ImageUpload value={formData.images} onChange={handleImageChange} multiple maxFiles={5} />
-      </Card>{' '}
+      </Card>
       <div className="flex items-center justify-end gap-4">
         <Button type="button" variant="outline" onClick={() => router.back()}>
           İptal

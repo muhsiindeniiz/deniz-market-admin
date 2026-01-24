@@ -18,7 +18,7 @@ interface UseProductsOptions {
 export function useProducts(options: UseProductsOptions = {}) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!options.skipInitialFetch);
   const [totalCount, setTotalCount] = useState(0);
 
   const { categoryId, search, page = 1, skipInitialFetch = false } = options;
